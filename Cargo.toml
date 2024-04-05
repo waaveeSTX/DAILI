@@ -11,3 +11,9 @@ toml = "0.8.12"
 home = "0.5.9"
 colored = "2.1"
 chrono = "0.4.35"
+
+[profile.release]
+strip = true
+opt-level = "s"
+lto = true
+codegen-units = 1
