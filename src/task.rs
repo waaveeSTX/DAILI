@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use crate::{extracting, today::Today, files};
+use crate::{extracting, today::Today, warning};
 use serde::{Serialize, Deserialize};
 
 #[derive(Deserialize, Serialize)]
@@ -50,11 +50,11 @@ pub fn print_tasklist_from(today: &Today)
     }
 }
 
-pub fn set_done_to(today: &mut Today, task_id: &str, choice: bool) -> Result<String, String>
+pub fn set_done_to(today: &mut Today, task_id: &str, choice: bool) -> Result<bool, String>
 {
     if task_id == "none"
     {
-        return Ok(String::new())
+        return Ok(false);
     }
     
     let owner_table = if today.essential.contains_key(task_id)
@@ -72,9 +72,19 @@ pub fn set_done_to(today: &mut Today, task_id: &str, choice: bool) -> Result<Str
 
     if let Some(task) = owner_table.get_mut(task_id)
     {
+        if task.done == choice
+        {
+            let prefix = match choice
+            {
+                true  => String::new(),
+                false => String::from("un")
+            };
+
+            warning::print_warning(format!("The task {task_id} is already {prefix}marked!").as_str());
+        }
+
         task.done = choice;
-        let new_contents: String = files::get_new_contents(today)?;
-        Ok(new_contents)
+        Ok(true)
     }
     else
     {

@@ -19,6 +19,8 @@ pub fn show_help() -> !
     println!("    daili m <argument>");
     println!("    daili unmark <argument>");
     println!("    daili mark <argument>");
+    println!("    daili m -a");
+    println!("    daili unmark --all");
     println!("    daili -h | --help");
     println!();
     println!("{}", "Documentation:".green());

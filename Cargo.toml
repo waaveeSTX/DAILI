@@ -6,11 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
-toml = "0.8.12"
+serde = { version = "1.0.197", features = ["derive"] }
+chrono = "0.4.37"
 home = "0.5.9"
-colored = "2.1"
-chrono = "0.4.35"
+toml = "0.8.12"
+colored = "2.1.0"
 
 [profile.release]
 strip = true

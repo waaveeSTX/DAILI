@@ -22,13 +22,12 @@ fn main()
 {
     let args: Vec<String> = env::args().collect();
 
-    let (mark, item_do_do_action_in) = match args::handle(&args)
+    let (mark, mut tasks_to_operate_on) = match args::handle(&args)
     {
-        Ok((mark, item_to_do_action_in)) => (mark, item_to_do_action_in),
+        Ok((mark, tasks_to_operate_on)) => (mark, tasks_to_operate_on),
         Err(err) => warning::print_error(err)
     };
 
-    // Seting up needed variables
     let paths: Paths = match Paths::new()
     {
         Ok(paths) => paths,
@@ -66,9 +65,35 @@ fn main()
 
     println!("{}", today.date.yellow());
     task::print_tasklist_from(&today);
-    
-    let new_today_contents: String = task::set_done_to(&mut today, &item_do_do_action_in, mark).unwrap_or_else(|err|
-                                        warning::print_error(err));
+
+    let mut action_done: bool = false;
+
+    if tasks_to_operate_on == vec!["all".to_string()]
+    {
+        tasks_to_operate_on = today.essential.keys()
+                                             .map(|k| k.clone())
+                                             .chain(today.optional.keys()
+                                                                  .map(|k| k.clone()))
+                                                                  .collect();
+    }
+
+    for task_id in tasks_to_operate_on
+    {
+        let done = task::set_done_to(&mut today, &task_id, mark).unwrap_or_else(|err|
+            warning::print_error(err));
+
+        if done
+        {
+            action_done = true;
+        }
+    }
+
+    let mut new_today_contents = String::new();
+    if action_done
+    {
+        new_today_contents = files::get_new_contents(&today).unwrap_or_else(|err|
+            warning::print_error(err));
+    }
 
     if new_today_contents != ""
     {

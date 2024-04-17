@@ -1,12 +1,12 @@
 use crate::warning;
 
-pub fn handle(args: &[String]) -> Result<(bool, String), String>
+pub fn handle(args: &[String]) -> Result<(bool, Vec<String>), String>
 {
     if args.len() == 1
     {
-        return Ok((false, "none".to_string()));
+        return Ok((false, vec!["none".to_string()]));
     }
-    
+
     if args[1].as_str() == "-h" || args[1].as_str() == "--help"
     {
         if args.len() >= 3
@@ -15,7 +15,7 @@ pub fn handle(args: &[String]) -> Result<(bool, String), String>
             {
                 "base"  => warning::show_base_help(),
                 "today" => warning::show_today_help(),
-                   _    => warning::print_error(format!("{} is not a valid sub-option of flag -h (or --help)", args[2].as_str()))
+                _    => warning::print_error(format!("{} is not a valid sub-option of flag -h (aka --help)", args[2].as_str()))
             }
         }
 
@@ -31,10 +31,33 @@ pub fn handle(args: &[String]) -> Result<(bool, String), String>
     {
         "m"  | "mark"   => true,
         "um" | "unmark" => false,
-         _   => return Err(format!("{} is not a valid argument!", args[1].as_str()))
+        _   => return Err(format!("{} is not a valid argument!", args[1].as_str()))
     };
 
-    let item_to_do_action_in: String = args[2].to_string();
+    let mut tasks_to_operate_on: Vec<String> = vec![];
 
-    Ok((mark, item_to_do_action_in))
+    let all = match args[2].as_str()
+    {
+        "-a" | "--all" => true,
+        _              => false
+    };
+
+    if !all
+    {
+        for arg in &args[2..args.len()]
+        {
+            if let Err(_) = arg.parse::<i32>()
+            {
+                return Err("You can only insert numbers or \"-a/--all\" as task ids".to_string());
+            }
+
+            tasks_to_operate_on.push(arg.to_string());
+        }
+    }
+    else
+    {
+        tasks_to_operate_on = vec!["all".to_string()];
+    }
+
+    Ok((mark, tasks_to_operate_on))
 }
