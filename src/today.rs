@@ -1,33 +1,28 @@
-use crate::{serde::{Serialize, Deserialize}, task::UnidentifiedTask, extracting, base::Base, files::{self, Contents}, Colorize};
-use std::path::PathBuf;
-use chrono::prelude::*;
+use crate::{base::Base, extracting, files::Contents, serde::{Deserialize, Serialize}, task::UnidentifiedTask, Colorize};
+use std::{fs, path::PathBuf};
 use std::collections::BTreeMap;
 
+// As explained in base.rs, this is the table template but for Today files, that require more
+// information about the task (the completion status)
 pub type TableTemplate = BTreeMap<String, UnidentifiedTask>;
 
+// Today, the object that is created from the Today file (~/.daili/today.toml) and displayed
 #[derive(Deserialize, Serialize)]
 pub struct Today
 {
-    pub date: String,
+    pub date:      String,
     pub essential: TableTemplate,
     pub optional:  TableTemplate
 }
 
 impl Today
 {
-    fn get_contents_from_base(base: &Base, current_date: &str) -> Result<String, String>
+    // This function handles the state of wether the contents for today should be rewritten with
+    // the ones from base or not, checking if the day had passed (achieving that by checking if the
+    // date written in the today.toml file is the same as the current) and if the contents for today
+    // are empty, which happens when you configure your base and then run the program.
+    pub fn handle(contents: &Contents, today_path: &PathBuf, base: &Base, current_date: &str) -> Result<Today, String>
     {
-        let new_today = extracting::convert_base_to_today(base, current_date);
-        let new_today_contents: String = toml::to_string(&new_today)
-                                            .map_err(|err| err.to_string())?;
-
-        Ok(new_today_contents)
-    }
-
-    pub fn handle(contents: &Contents, today_path: &PathBuf, base: &Base) -> Result<Today, String>
-    {
-        let current_date = Utc::now().date_naive().format("%Y-%m-%d").to_string();
-
         let mut today_contents: String = contents.today.clone();
         let mut should_rewrite = today_contents.is_empty();
 
@@ -39,8 +34,9 @@ impl Today
             {
                 println!("{}", "rewriting...\n".blue());
 
-                today_contents = Today::get_contents_from_base(base, current_date.as_str())?;
-                files::overwrite(today_path, &today_contents)?;
+                let new_today: Today = extracting::convert_base_to_today(base, current_date);
+                today_contents = toml::to_string(&new_today).map_err(|err| err.to_string())?;
+                fs::write(today_path, &today_contents).map_err(|err| err.to_string())?;
             }
 
             today = toml::from_str(&today_contents)

@@ -1,6 +1,7 @@
 use crate::{today::{self, Today}, base::Base, task::{TaskList, IdentifiedTask, UnidentifiedTask}};
 use std::collections::BTreeMap;
 
+// This function extracts a TaskList from the Today object.
 pub fn get_list_from<'a>(today: &'a Today) -> TaskList<'a>
 {
     let mut list: TaskList = BTreeMap::new();
@@ -20,6 +21,7 @@ pub fn get_list_from<'a>(today: &'a Today) -> TaskList<'a>
     list
 }
 
+// Passing a Base object, receive a Today object with all the tasks uncompleted
 pub fn convert_base_to_today(base: &Base, date: &str) -> Today
 {
     let mut today = Today { date: date.to_string(), essential: BTreeMap::new(), optional: BTreeMap::new() };

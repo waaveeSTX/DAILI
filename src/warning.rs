@@ -1,7 +1,8 @@
 use std::process;
 use colored::Colorize;
 
-pub fn print_error(err: String) -> ! {
+pub fn print_error(err: String) -> !
+{
     eprintln!("Something went wrong: {}", err.red());
     process::exit(1);
 }
@@ -15,6 +16,8 @@ pub fn show_help() -> !
     println!("{}", "Allows you to see a customizable to-do list, and mark or unmark items in there".blue());
     println!();
     println!("{}", "Usage:".green());
+    println!("    daili add <argument>");
+    println!("    daili remove <argument>");
     println!("    daili [[m | mark] | [um | unmark] <argument>]");
     println!("    daili m <argument>");
     println!("    daili unmark <argument>");

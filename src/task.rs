@@ -2,6 +2,8 @@ use std::collections::BTreeMap;
 use crate::{extracting, today::Today, warning};
 use serde::{Serialize, Deserialize};
 
+// The bare structure that is a task, without any identification of the table it belongs to,
+// just the text for it and the completion status.
 #[derive(Deserialize, Serialize)]
 pub struct UnidentifiedTask
 {
@@ -9,17 +11,28 @@ pub struct UnidentifiedTask
     pub done: bool
 }
 
+// The task but with that identification
+// owner_table must be either "essential" or "optional"
 pub struct IdentifiedTask<'a>
 {
     pub task: &'a UnidentifiedTask,
     pub owner_table: &'a str
 }
 
+// The list of tasks that will be extracted from a Today object (parsed Today file)
 pub type TaskList<'a> = BTreeMap<String, IdentifiedTask<'a>>;
 
+// Passing a Today object as a parameter, this function should extract a TaskList from it and print
+// the tasks one by one while formatting them properly.
 pub fn print_tasklist_from(today: &Today)
 {
     let list: &TaskList = &extracting::get_list_from(today);
+
+    if list.is_empty()
+    {
+        println!("\tNo tasks around here just yet! •,•");
+        return;
+    }
 
     let mut text_lens: Vec<usize> = Vec::new();
 
@@ -50,6 +63,9 @@ pub fn print_tasklist_from(today: &Today)
     }
 }
 
+// From a Today object, with also being fed the id for the task you are looking for from inside the
+// Today object, this function changes the completion status of a task as you want, that being
+// specified with the parameter choice.
 pub fn set_done_to(today: &mut Today, task_id: &str, choice: bool) -> Result<bool, String>
 {
     if task_id == "none"

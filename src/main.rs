@@ -1,6 +1,6 @@
-use std::process;
-use std::env;
+use std::{env, fs};
 
+mod action;
 mod args;
 mod warning;
 mod paths;
@@ -15,18 +15,19 @@ use files::{Files, Contents};
 use base::Base;
 use today::Today;
 
+use chrono::prelude::*;
 use serde;
 use colored::Colorize;
 
+use action::Action;
+
 fn main()
 {
+    let current_date = Utc::now().date_naive().format("%Y-%m-%d").to_string();
+
     let args: Vec<String> = env::args().collect();
 
-    let (mark, mut tasks_to_operate_on) = match args::handle(&args)
-    {
-        Ok((mark, tasks_to_operate_on)) => (mark, tasks_to_operate_on),
-        Err(err) => warning::print_error(err)
-    };
+    let action: Action = args::get_action(&args).unwrap_or_else(|err| warning::print_error(err));
 
     let paths: Paths = match Paths::new()
     {
@@ -46,62 +47,41 @@ fn main()
         Err(err) => warning::print_error(err),
     };
 
-    let base: Base = match Base::from_str(&contents.base)
+    let mut base: Base = match Base::new(&contents.base)
     {
         Ok(base) => base,
-        Err(err) =>
-        {
-            warning::print_warning(&err);
-            println!("{}", "Learn how to create a base.toml file using \"daili -h base\"".blue());
-            process::exit(1);
-        }
+        Err(err) => warning::print_error(err)
     };
 
-    let mut today: Today = match Today::handle(&contents, &paths.today, &base)
+    let mut today: Today = match Today::handle(&contents, &paths.today, &base, &current_date)
     {
         Ok(today) => today,
         Err(err)  => warning::print_error(err)
     };
 
+    // Printing before making a change
     println!("{}", today.date.yellow());
     task::print_tasklist_from(&today);
 
-    let mut action_done: bool = false;
+    let action_done: bool = action::act(&args, &mut today, &mut base, &paths, &current_date, action).unwrap_or_else(|err| warning::print_error(err));
 
-    if tasks_to_operate_on == vec!["all".to_string()]
+    // This is only changed if the action was done, being a empty string otherwise
+    let new_today_contents = match action_done
     {
-        tasks_to_operate_on = today.essential.keys()
-                                             .map(|k| k.clone())
-                                             .chain(today.optional.keys()
-                                                                  .map(|k| k.clone()))
-                                                                  .collect();
-    }
+        true  => toml::to_string(&today).unwrap_or_else(|err| warning::print_error(err.to_string())),
+        false => String::new()
+    };
 
-    for task_id in tasks_to_operate_on
-    {
-        let done = task::set_done_to(&mut today, &task_id, mark).unwrap_or_else(|err|
-            warning::print_error(err));
-
-        if done
-        {
-            action_done = true;
-        }
-    }
-
-    let mut new_today_contents = String::new();
-    if action_done
-    {
-        new_today_contents = files::get_new_contents(&today).unwrap_or_else(|err|
-            warning::print_error(err));
-    }
-
+    // If the action was done, print the new list and update its contents as well
     if new_today_contents != ""
     {
+        println!();
+        println!("-/--/--/--/--/--/--/--/--/--/--/--/--/--/--/-");
         println!();
 
         task::print_tasklist_from(&today);
 
-        files::overwrite(&paths.today, &new_today_contents).unwrap_or_else(|err|
+        fs::write(&paths.today, &new_today_contents).map_err(|err| err.to_string()).unwrap_or_else(|err|
             warning::print_error(err));
     }
 }
