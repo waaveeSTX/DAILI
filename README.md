@@ -15,7 +15,9 @@ Both files are located in _$HOME/.daili/_.
 ## Base File 📓
 > this is what you should see when using `daili -h base`
 
-**Your base.toml file should be located at $HOME/.daili/ and look something like this:**
+*** This is an important file of the internal working of the program. There is a better way of adding and removing tasks from base within the program, but if you want to hardcode your tasks, feel free.
+
+Your base.toml file should be located at $HOME/.daili/ and look something like this:
 
     [essential]
     1 = "Paint a picture"
@@ -26,10 +28,11 @@ Both files are located in _$HOME/.daili/_.
     4 = "Watch anime"
     5 = "Try something new"
 
-*Dont forget that the labels, the numbers for the tasks and the quantity are your choice!*
-
 This is the base, the things you would like to do everyday
 The program fetches your preferences from this file to create a today.toml file (know more about it with daili -h today)
+
+As explained earlier, you don't need to modify those contents, because the tool offers a more user-friendly way to do that.
+(know more about it with daili -h modifying_base)
 
 ## Today File ☀️
 > this is what you should see when using `daili -h today`
@@ -48,5 +51,7 @@ to show you and update the tasks properly
 Use `daili m` followed by the number of a task you want to mark, or `daili um` for unmarking tasks. You can also use the longer versions `mark` and `unmark`.
 
 `daili -h` can be used to see the usage and documentation. `daili` alone will simply show you your list for today.
+
+You can now also add and delete tasks from base using `daili add <label> <table>` and `daili delete <id>`
 
 ### Good luck organizing your day with DAILI 👋
