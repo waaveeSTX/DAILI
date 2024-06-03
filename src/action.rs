@@ -1,6 +1,6 @@
-use std::fs;
+use std::{fs, path::PathBuf};
 
-use crate::{base::Base, extracting, paths::Paths, task, today::Today};
+use crate::{base::Base, extracting, task, today::Today};
 
 // enum that represents the diferent types an action can take, just for identification
 pub enum ActionKind
@@ -54,7 +54,7 @@ fn get_tasks_to_operate_on(args: &[String]) -> Result<Vec<String>, String>
 // Given an action and a Today object, act upon the Today object with the given configuration.
 // Returns wether the action was done or not, in the case of the action type being none that value
 // would be false.
-pub fn act(args: &[String], today: &mut Today, base: &mut Base, paths: &Paths, current_date: &str, action: Action) -> Result<bool, String>
+pub fn act(args: &[String], today: &mut Today, base: &mut Base, base_path: &PathBuf, today_path: &PathBuf, current_date: &str, action: &Action) -> Result<bool, String>
 {
     let mut action_done: bool = false;
 
@@ -131,12 +131,12 @@ pub fn act(args: &[String], today: &mut Today, base: &mut Base, paths: &Paths, c
             let new_base_contents: String = toml::to_string(&base).map_err(|err| err.to_string())?;
 
             // Writting the new base contents into the base file
-            fs::write(&paths.base, &new_base_contents).map_err(|err| err.to_string())?;
+            fs::write(base_path, &new_base_contents).map_err(|err| err.to_string())?;
 
             *today = extracting::convert_base_to_today(&base, current_date);
 
             // Writting the today contents from the new base into the today file
-            fs::write(&paths.today, &toml::to_string(today).map_err(|err| err.to_string())?).map_err(|err| err.to_string())?;
+            fs::write(today_path, &toml::to_string(today).map_err(|err| err.to_string())?).map_err(|err| err.to_string())?;
 
             action_done = true;
         }

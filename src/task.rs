@@ -97,6 +97,7 @@ pub fn set_done_to(today: &mut Today, task_id: &str, choice: bool) -> Result<boo
             };
 
             warning::print_warning(format!("The task {task_id} is already {prefix}marked!").as_str());
+            return Ok(false);
         }
 
         task.done = choice;

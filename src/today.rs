@@ -1,4 +1,4 @@
-use crate::{base::Base, extracting, files::Contents, serde::{Deserialize, Serialize}, task::UnidentifiedTask, Colorize};
+use crate::{base::Base, extracting, serde::{Deserialize, Serialize}, task::UnidentifiedTask, Colorize};
 use std::{fs, path::PathBuf};
 use std::collections::BTreeMap;
 
@@ -6,7 +6,8 @@ use std::collections::BTreeMap;
 // information about the task (the completion status)
 pub type TableTemplate = BTreeMap<String, UnidentifiedTask>;
 
-// Today, the object that is created from the Today file (~/.daili/today.toml) and displayed
+/// The object that is created from the Today file (~/.daili/today.toml) to be manipulated and
+/// displayed, being also possible to serialize it back 
 #[derive(Deserialize, Serialize)]
 pub struct Today
 {
@@ -17,13 +18,13 @@ pub struct Today
 
 impl Today
 {
-    // This function handles the state of wether the contents for today should be rewritten with
-    // the ones from base or not, checking if the day had passed (achieving that by checking if the
-    // date written in the today.toml file is the same as the current) and if the contents for today
-    // are empty, which happens when you configure your base and then run the program.
-    pub fn handle(contents: &Contents, today_path: &PathBuf, base: &Base, current_date: &str) -> Result<Today, String>
+    /// This function handles the state of wether the contents for today should be rewritten with
+    /// the ones from base or not, checking if the day had passed (achieving that by checking if the
+    /// date written in the today.toml file is the same as the current) and if the contents for today
+    /// are empty, which happens when you configure your base and then run the program.
+    pub fn handle(today_initial_contents: &str, today_path: &PathBuf, base: &Base, current_date: &str) -> Result<Today, String>
     {
-        let mut today_contents: String = contents.today.clone();
+        let mut today_contents: String = today_initial_contents.to_string();
         let mut should_rewrite = today_contents.is_empty();
 
         let mut today: Today;

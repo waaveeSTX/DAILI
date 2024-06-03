@@ -3,85 +3,62 @@ use std::{env, fs};
 mod action;
 mod args;
 mod warning;
-mod paths;
-mod files;
+mod daili_path;
+mod file_container;
 mod base;
 mod today;
+mod container;
 mod extracting;
 mod task;
-
-use paths::Paths;
-use files::{Files, Contents};
-use base::Base;
-use today::Today;
 
 use chrono::prelude::*;
 use serde;
 use colored::Colorize;
-
 use action::Action;
+
+use base::Base;
+use today::Today;
+use container::Container;
 
 fn main()
 {
-    let current_date = Utc::now().date_naive().format("%Y-%m-%d").to_string();
+    // 1 - Initializing daili_path, current_date and args; extracting the action
+    let daili_path = daili_path::get_and_create_daili_path().unwrap_or_else(|err| warning::print_error(err));
 
+    let current_date = Utc::now().date_naive().format("%Y-%m-%d").to_string();
     let args: Vec<String> = env::args().collect();
 
     let action: Action = args::get_action(&args).unwrap_or_else(|err| warning::print_error(err));
 
-    let paths: Paths = match Paths::new()
-    {
-        Ok(paths) => paths,
-        Err(err) => warning::print_error(err),
-    };
 
-    let mut files: Files = match Files::new(&paths)
-    {
-        Ok(files) => files,
-        Err(err) => warning::print_error(err),
-    };
+    // 2 - Initializing containers
+    let mut base  = Container::<Base>::init(&daili_path.join("base.toml"), None, None).unwrap_or_else(|err| warning::print_error(err));
+    let mut today = Container::<Today>::init(&daili_path.join("today.toml"), Some(&base.object), Some(&current_date)).unwrap_or_else(|err| warning::print_error(err));
 
-    let contents: Contents = match Contents::new(&mut files)
-    {
-        Ok(contents) => contents,
-        Err(err) => warning::print_error(err),
-    };
 
-    let mut base: Base = match Base::new(&contents.base)
-    {
-        Ok(base) => base,
-        Err(err) => warning::print_error(err)
-    };
+    // 3 - Printing the previous state and updating it by acting upon it with the configuration
+    //   extracted
+    println!("{}", today.object.date.yellow());
+    task::print_tasklist_from(&today.object);
 
-    let mut today: Today = match Today::handle(&contents, &paths.today, &base, &current_date)
-    {
-        Ok(today) => today,
-        Err(err)  => warning::print_error(err)
-    };
+    let action_done: bool = action::act(&args, &mut today.object, &mut base.object, &base.file.path, &today.file.path, &current_date, &action).unwrap_or_else(|err| warning::print_error(err));
 
-    // Printing before making a change
-    println!("{}", today.date.yellow());
-    task::print_tasklist_from(&today);
 
-    let action_done: bool = action::act(&args, &mut today, &mut base, &paths, &current_date, action).unwrap_or_else(|err| warning::print_error(err));
-
-    // This is only changed if the action was done, being a empty string otherwise
+    // 4 - Displaying the new state if it is changed
     let new_today_contents = match action_done
     {
-        true  => toml::to_string(&today).unwrap_or_else(|err| warning::print_error(err.to_string())),
+        true  => toml::to_string(&today.object).unwrap_or_else(|err| warning::print_error(err.to_string())),
         false => String::new()
     };
 
-    // If the action was done, print the new list and update its contents as well
     if new_today_contents != ""
     {
         println!();
         println!("-/--/--/--/--/--/--/--/--/--/--/--/--/--/--/-");
         println!();
 
-        task::print_tasklist_from(&today);
+        task::print_tasklist_from(&today.object);
 
-        fs::write(&paths.today, &new_today_contents).map_err(|err| err.to_string()).unwrap_or_else(|err|
-            warning::print_error(err));
+        fs::write(today.file.path, &new_today_contents).map_err(|err| err.to_string()).unwrap_or_else(|err| warning::print_error(err));
     }
 }

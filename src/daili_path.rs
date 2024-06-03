@@ -9,7 +9,7 @@ fn get_home_dir() -> Result<PathBuf, String>
     home_dir().ok_or_else(|| "Couldn't find home path".to_string())
 }
 
-fn get_daili_path() -> Result<PathBuf, String>
+pub fn get_and_create_daili_path() -> Result<PathBuf, String>
 {
     let mut daili: PathBuf = get_home_dir()?;
     daili.push(".daili");
@@ -29,24 +29,5 @@ fn get_daili_path() -> Result<PathBuf, String>
 
             Ok(daili)
         }
-    }
-}
-
-pub struct Paths
-{
-    pub daili: PathBuf,
-    pub today: PathBuf,
-    pub base:  PathBuf,
-}
-
-impl Paths
-{
-    pub fn new() -> Result<Paths, String>
-    {
-        let daili: PathBuf = get_daili_path()?;
-        let today: PathBuf = daili.join("today.toml");
-        let base:  PathBuf = daili.join("base.toml");
-
-        Ok(Paths { daili, today, base })
     }
 }

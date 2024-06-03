@@ -11,9 +11,10 @@ fn handle_help_argument(args: &[String])
         {
             match args[2].as_str()
             {
-                "base"  => warning::show_base_help(),
-                "today" => warning::show_today_help(),
-                _       => warning::print_error(format!("{} is not a valid sub-option of flag -h (aka --help)", args[2].as_str()))
+                "base"           => warning::show_base_help(),
+                "today"          => warning::show_today_help(),
+                "modifying_base" => warning::modifying_base_help(),
+                _                => warning::print_error(format!("{} is not a valid sub-option of flag -h (aka --help)", args[2].as_str()))
             }
         }
 
